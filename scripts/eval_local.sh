@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 SRC_PTH=${ROOT}/src
 GPU_ID=${GPU_ID:-1}
-LLM_PATH=${LLM_PATH:-meta-llama/Llama-3.2-3B}
+LLM_PATH=${LLM_PATH:-${ROOT}/pretrained_models/llama-3.2-3b}
 WHISPER_PATH=${WHISPER_PATH:-${ROOT}/pretrained_models/hf/openai-whisper-medium.en}
 QFORMER_CONFIG_PATH=${QFORMER_CONFIG_PATH:-${ROOT}/pretrained_models/hf/bert-large-uncased}
 SR_PREDICTOR_PATH=${SR_PREDICTOR_PATH:-${ROOT}/pretrained_models/sr_predictor/checkpoint.pt}

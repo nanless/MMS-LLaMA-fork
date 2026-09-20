@@ -15,7 +15,7 @@ decord==0.6.0
 diffusers==0.16.0
 editdistance==0.8.1
 einops==0.8.1
--e git+https://github.com/JeongHun0716/MMS-LLaMA.git@e59093788d0b172c20e1893b50bea3c5424f7215#egg=fairseq&subdirectory=fairseq
+-e git+https://github.com/JeongHun0716/MMS-LLaMA.git@f61f5e8d5e57da1314386fe7ac1844a7b50dc16f#egg=fairseq&subdirectory=fairseq
 ffmpeg==1.4
 filelock==3.19.1
 fsspec==2025.7.0
@@ -36,6 +36,7 @@ llvmlite==0.43.0
 lxml==6.1.3
 Markdown==3.9
 MarkupSafe==3.0.2
+modelscope==1.37.1
 mpmath==1.3.0
 msgpack==1.1.2
 networkx==3.2.1
