@@ -37,6 +37,15 @@ class MMS_LLaMA_Config(AVHubertAsrConfig):
     llm_path: str = field(
         default='meta-llama/Llama-3.2-3B'
     )
+    whisper_path: str = field(
+        default='openai/whisper-medium.en'
+    )
+    qformer_config_path: str = field(
+        default='bert-large-uncased'
+    )
+    sr_predictor_path: Optional[str] = field(
+        default=None
+    )
     target_modules: str = field(
         default='q_proj.v_proj.k_proj.o_proj'
     )
@@ -118,7 +127,7 @@ class MMS_LLaMA(BaseFairseqModel):
             else:
                 max_queries = int(cfg.queries_per_sec * 20)
                 
-            qformer_config = BertConfig.from_pretrained("bert-large-uncased")
+            qformer_config = BertConfig.from_pretrained(cfg.qformer_config_path)
             qformer_config.num_hidden_layers = cfg.qformer_layers
             qformer_config.encoder_width = self.embed
             qformer_config.hidden_size = cfg.qformer_dim 
@@ -136,7 +145,7 @@ class MMS_LLaMA(BaseFairseqModel):
                 max_queries = int(cfg.queries_per_sec * 20 * 2)
                 self.sr_predictor = Speech_Rate_Predictor(num_layers=cfg.sr_predictor_layers)
                 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                sr_ckpt_path = f'{root_dir}/pretrained_models/sr_predictor/checkpoint.pt'
+                sr_ckpt_path = cfg.sr_predictor_path or f'{root_dir}/pretrained_models/sr_predictor/checkpoint.pt'
                 sr_state = torch.load(sr_ckpt_path)['model']
                 sr_state_ = {}
                 for k, v in sr_state.items():
@@ -180,8 +189,7 @@ class MMS_LLaMA(BaseFairseqModel):
             "encoder_layerdrop": cfg.layerdrop,
             "feature_grad_mult": cfg.feature_grad_mult,
         }
-        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        w2v_path = f'{root_dir}/pretrained_models/avhubert/large_vox_iter5.pt'
+        w2v_path = cfg.w2v_path
 
         if cfg.w2v_args is None:
             state = checkpoint_utils.load_checkpoint_to_cpu(
@@ -221,7 +229,7 @@ class MMS_LLaMA(BaseFairseqModel):
 
         avhubert.w2v_model.remove_pretraining_modules()
 
-        whisper_ = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium.en").model.encoder
+        whisper_ = WhisperForConditionalGeneration.from_pretrained(cfg.whisper_path).model.encoder
         whisper = WhisperEncoderWrapper(whisper_)
 
         bnb_config = BitsAndBytesConfig(

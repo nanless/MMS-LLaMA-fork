@@ -82,6 +82,9 @@ model:
   _name: MMS-LLaMA
   ###### avhubert ########
   w2v_path: ???
+  whisper_path: openai/whisper-medium.en
+  qformer_config_path: bert-large-uncased
+  sr_predictor_path: null
   apply_mask: false
   mask_selection: static
   mask_length: 10

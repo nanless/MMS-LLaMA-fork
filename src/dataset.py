@@ -195,10 +195,15 @@ class mms_llama_dataset(FairseqDataset):
         self.snr_target = snr_target
         self.snr_levels = [-5, 0, 5, 10, 15, 20]
 
-        self.noise, sample_rate = torchaudio.load(noise_fn)
         self.noise_prob = noise_prob
-        
-        assert sample_rate == 16000
+        self.noise = None
+        if noise_fn:
+            self.noise, noise_sample_rate = torchaudio.load(noise_fn)
+            if noise_sample_rate != 16000:
+                raise ValueError(f"Noise must be 16 kHz, got {noise_sample_rate}: {noise_fn}")
+        elif noise_prob:
+            raise ValueError("noise_fn is required when noise_prob is non-zero")
+
         assert self.single_target == (self.label_rates[0] == -1), f"single target should be equivalent to sequence label (label_rate==-1)"
         if store_labels:
             self.label_list = [load_label(p, inds, tot) for p in label_paths]
@@ -240,14 +245,20 @@ class mms_llama_dataset(FairseqDataset):
     def add_noise(self, speech):
         # speech: T x 1
         # return: T x 1
-        speech = torch.from_numpy(speech)
-        speech = speech.unsqueeze(1)
-        start_idx = random.randint(0, self.noise.shape[1] - speech.shape[1])
-        noise_segment = self.noise[:, start_idx : start_idx + speech.shape[1]]
+        if self.noise is None:
+            raise RuntimeError("Noise was requested but no noise waveform is loaded")
+        speech = torch.from_numpy(speech).float().unsqueeze(0)
+        if self.noise.shape[1] < speech.shape[1]:
+            repeats = math.ceil(speech.shape[1] / self.noise.shape[1])
+            noise = self.noise.repeat(1, repeats)
+        else:
+            noise = self.noise
+        start_idx = random.randint(0, noise.shape[1] - speech.shape[1])
+        noise_segment = noise[:, start_idx : start_idx + speech.shape[1]]
         snr_level = torch.tensor([random.choice(self.snr_levels)])
         noisy_speech = torchaudio.functional.add_noise(speech, noise_segment, snr_level)
 
-        return noisy_speech.squeeze(1).numpy()
+        return noisy_speech.squeeze(0).numpy()
         
     def load_feature(self, mix_name):
         """

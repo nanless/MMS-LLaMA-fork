@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-def modify_paths(file_path, vox2_root, muavic_root, lrs3_root, avs_root):
+def modify_paths(file_path, vox2_root, lrs3_root):
     """
     Reads a TSV file with placeholders and replaces them with the provided absolute dataset paths.
     The processed content is written back to the same file.
@@ -27,7 +27,7 @@ def modify_paths(file_path, vox2_root, muavic_root, lrs3_root, avs_root):
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write("\n".join(processed_lines) + "\n")
 
-def process_all_tsvs(input_dir, vox2_root, muavic_root, lrs3_root, avs_root):
+def process_all_tsvs(input_dir, vox2_root, lrs3_root):
     """
     Recursively finds all TSV files in the input directory and applies the modify_paths function.
     """
@@ -38,7 +38,7 @@ def process_all_tsvs(input_dir, vox2_root, muavic_root, lrs3_root, avs_root):
         return
     for tsv_file in tsv_files:
         print(f"Processing file: {tsv_file}")
-        modify_paths(tsv_file, vox2_root, muavic_root, lrs3_root, avs_root)
+        modify_paths(tsv_file, vox2_root, lrs3_root)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
