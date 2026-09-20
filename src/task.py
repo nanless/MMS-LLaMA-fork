@@ -65,6 +65,10 @@ class MMS_LLaMA_TrainingConfig(FairseqDataclass):
     llm_path: str = field(
         default=MISSING, metadata={"help": "path to llama checkpoint"}
     )
+    whisper_path: str = field(
+        default="openai/whisper-medium.en",
+        metadata={"help": "Whisper processor model name or local path"},
+    )
     normalize: bool = field(
         default=False,
         metadata={
@@ -125,10 +129,10 @@ class MMS_LLaMA_TrainingConfig(FairseqDataclass):
     is_s2s: bool=field(default=False, metadata={'help': 'seq2seq fine-tuning only'})
     tokenizer_bpe_name: Optional[str] = field(default=None, metadata={'help': 'tokenizer model name'})
     tokenizer_bpe_model: Optional[str] = field(default=None, metadata={'help': 'tokenizer model path'})
-    noise_wav: Optional[str] = field(default=None, metadata={'help': 'manifest of noise wav files (one wav file path per line)'})
+    noise_wav: Optional[str] = field(default=None, metadata={'help': 'path to one noise wav file'})
     noise_prob: float = field(default=0, metadata={'help': 'noise probability'})
     noise_snr: Optional[str] = field(default='0', metadata={'help': 'noise SNR in audio'})
-    snr_target: Optional[str] = field(default=None, metadata={'help': 'noise SNR in audio'})
+    snr_target: Optional[float] = field(default=None, metadata={'help': 'fixed evaluation SNR in dB'})
     noise_num: int = field(default=1, metadata={'help': 'number of noise wav files to mix'})
     fine_tuning: bool = field(default=False, metadata={"help": "set to true if fine-tuning AV-Hubert"})
 
@@ -186,6 +190,7 @@ class MMS_LLaMA_TrainingTask(FairseqTask):
             manifest,
             sample_rate=self.cfg.sample_rate,
             llm_path=self.cfg.llm_path,
+            whisper_path=self.cfg.whisper_path,
             label_paths=paths,
             label_rates=self.cfg.label_rate,
             max_keep_sample_size=self.cfg.max_sample_size,

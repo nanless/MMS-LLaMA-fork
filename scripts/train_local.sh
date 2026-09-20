@@ -14,17 +14,27 @@ GPU_IDS=${GPU_IDS:-0,1}
 UPDATE_FREQ=${UPDATE_FREQ:-4}
 MAX_TOKENS=${MAX_TOKENS:-1000}
 OUT_PATH=${OUT_PATH:-${ROOT}/exp/mms-llama/433h_${NGPUS}gpu}
+FAIRSEQ_BIN=${FAIRSEQ_BIN:-/root/miniforge3/envs/mms-llama-repro/bin/fairseq-hydra-train}
+
+[[ -x ${FAIRSEQ_BIN} ]] || { echo "fairseq-hydra-train not found: ${FAIRSEQ_BIN}" >&2; exit 1; }
+IFS=',' read -r -a GPU_ID_LIST <<< "${GPU_IDS}"
+if [[ ${#GPU_ID_LIST[@]} -ne ${NGPUS} ]]; then
+  echo "GPU_IDS contains ${#GPU_ID_LIST[@]} IDs but NGPUS=${NGPUS}" >&2
+  exit 2
+fi
+echo "Effective token budget per update: $((NGPUS * MAX_TOKENS * UPDATE_FREQ))"
 
 export TOKENIZERS_PARALLELISM=false
 export PYTHONPATH=${ROOT}/fairseq${PYTHONPATH:+:${PYTHONPATH}}
 
-CUDA_VISIBLE_DEVICES=${GPU_IDS} fairseq-hydra-train \
+CUDA_VISIBLE_DEVICES=${GPU_IDS} "${FAIRSEQ_BIN}" \
   --config-dir "${SRC_PTH}/conf" \
   --config-name mms-llama.yaml \
   task.data="${MANIFEST_DIR}" \
   task.label_dir="${MANIFEST_DIR}" \
   task.tokenizer_bpe_model=null \
   task.llm_path="${LLM_PATH}" \
+  task.whisper_path="${WHISPER_PATH}" \
   task.noise_prob=0.75 \
   task.noise_wav="${NOISE_WAV}" \
   hydra.run.dir="${OUT_PATH}" \

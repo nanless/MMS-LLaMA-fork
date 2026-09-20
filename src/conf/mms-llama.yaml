@@ -42,6 +42,7 @@ task:
   pad_audio: true
   random_crop: false
   llm_path: ???
+  whisper_path: openai/whisper-medium.en
   noise_prob: ???
   noise_wav: ???
 

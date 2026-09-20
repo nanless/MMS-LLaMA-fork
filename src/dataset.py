@@ -142,6 +142,7 @@ class mms_llama_dataset(FairseqDataset):
             manifest_path: str,
             sample_rate: float,
             llm_path: str,
+            whisper_path: str,
             label_paths: List[str],
             label_rates: Union[List[float], float],  # -1 for sequence labels
             max_keep_sample_size: Optional[int] = None,
@@ -181,7 +182,7 @@ class mms_llama_dataset(FairseqDataset):
         
         
         self.llm_tokenizer = AutoTokenizer.from_pretrained(llm_path)
-        self.whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-medium.en")
+        self.whisper_processor = WhisperProcessor.from_pretrained(whisper_path)
         
         
         self.llm_tokenizer.pad_token_id = self.llm_tokenizer.eos_token_id
@@ -242,7 +243,7 @@ class mms_llama_dataset(FairseqDataset):
             f"seqs2seq data={self.is_s2s},")
 
       
-    def add_noise(self, speech):
+    def add_noise(self, speech, snr=None):
         # speech: T x 1
         # return: T x 1
         if self.noise is None:
@@ -255,7 +256,8 @@ class mms_llama_dataset(FairseqDataset):
             noise = self.noise
         start_idx = random.randint(0, noise.shape[1] - speech.shape[1])
         noise_segment = noise[:, start_idx : start_idx + speech.shape[1]]
-        snr_level = torch.tensor([random.choice(self.snr_levels)])
+        snr_value = random.choice(self.snr_levels) if snr is None else float(snr)
+        snr_level = torch.tensor([snr_value])
         noisy_speech = torchaudio.functional.add_noise(speech, noise_segment, snr_level)
 
         return noisy_speech.squeeze(0).numpy()
@@ -297,7 +299,7 @@ class mms_llama_dataset(FairseqDataset):
                 wav_data = self.add_noise(wav_data)
             elif self.subset =='test' and self.snr_target is not None:
                 if self.noise_prob != 0:
-                    wav_data = self.add_noise(wav_data)
+                    wav_data = self.add_noise(wav_data, snr=self.snr_target)
                 
             len_audio_feats = math.floor(len(wav_data)/16000*100)
             audio_feats = self.whisper_processor(wav_data, sampling_rate=sample_rate, return_tensors="pt").input_features #[:,:,:len_audio_feats]

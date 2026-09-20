@@ -144,6 +144,7 @@ def _main(cfg, output_file):
     # loading the dataset should happen after the checkpoint has been loaded so we can give it the saved task config
 
     task.cfg.llm_path = cfg.override.llm_path
+    task.cfg.whisper_path = cfg.override.whisper_path
     task.cfg.noise_prob = cfg.override.noise_prob
     task.cfg.snr_target = cfg.override.noise_snr
     task.cfg.noise_wav = cfg.override.noise_wav
