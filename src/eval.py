@@ -57,6 +57,10 @@ class OverrideConfig(FairseqDataclass):
     data: Optional[str] = field(default=None, metadata={'help': 'path to test data directory'})
     label_dir: Optional[str] = field(default=None, metadata={'help': 'path to test label directory'})
     llm_path: str = field(default=MISSING, metadata={'help': 'path to llama checkpoint'})
+    w2v_path: str = field(default=MISSING, metadata={'help': 'path to AV-HuBERT checkpoint'})
+    whisper_path: str = field(default='openai/whisper-medium.en', metadata={'help': 'Whisper model name or local path'})
+    qformer_config_path: str = field(default='bert-large-uncased', metadata={'help': 'BERT config name or local path for Q-Former'})
+    sr_predictor_path: Optional[str] = field(default=None, metadata={'help': 'path to speech-rate predictor checkpoint'})
 
 
 @dataclass
@@ -109,7 +113,15 @@ def _main(cfg, output_file):
     utils.import_user_module(cfg.common)
 
     tokenizer = AutoTokenizer.from_pretrained(cfg.override.llm_path)
-    model_override_cfg = {'model':{'llm_path':cfg.override.llm_path}}
+    model_override_cfg = {
+        'model': {
+            'llm_path': cfg.override.llm_path,
+            'w2v_path': cfg.override.w2v_path,
+            'whisper_path': cfg.override.whisper_path,
+            'qformer_config_path': cfg.override.qformer_config_path,
+            'sr_predictor_path': cfg.override.sr_predictor_path,
+        }
+    }
     models, saved_cfg, task = checkpoint_utils.load_model_ensemble_and_task([cfg.common_eval.path],model_override_cfg,strict=False)
 
     saved_cfg.task.modalities = cfg.override.modalities

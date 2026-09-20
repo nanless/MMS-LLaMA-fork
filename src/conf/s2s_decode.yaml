@@ -23,3 +23,7 @@ override:
   noise_snr: 0
   modalities: ???
   llm_path: ???
+  w2v_path: ???
+  whisper_path: openai/whisper-medium.en
+  qformer_config_path: bert-large-uncased
+  sr_predictor_path: null
