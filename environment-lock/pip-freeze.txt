@@ -13,9 +13,10 @@ Cython==3.3.0
 decorator==5.3.1
 decord==0.6.0
 diffusers==0.16.0
+dlib==19.24.6
 editdistance==0.8.1
 einops==0.8.1
--e git+https://github.com/JeongHun0716/MMS-LLaMA.git@f61f5e8d5e57da1314386fe7ac1844a7b50dc16f#egg=fairseq&subdirectory=fairseq
+-e git+https://github.com/JeongHun0716/MMS-LLaMA.git@d21130cba5596f5665c5eb9fbcd764b8ae989b7d#egg=fairseq&subdirectory=fairseq
 ffmpeg==1.4
 filelock==3.19.1
 fsspec==2025.7.0
@@ -24,7 +25,7 @@ hf-xet==1.1.9
 huggingface-hub==0.34.4
 hydra-core==1.0.7
 idna==3.10
-imageio==2.25.0
+ImageIO==2.37.2
 imageio-ffmpeg==0.4.8
 importlib_metadata==8.7.0
 Jinja2==3.1.6
@@ -65,17 +66,21 @@ portalocker==3.2.0
 protobuf==6.33.6
 psutil==7.0.0
 pycparser==2.23
+pydub==0.25.1
 pyfiglet==1.0.4
 python-dateutil==2.9.0.post0
 python_speech_features==0.6
 pytz==2025.2
+PyWavelets==1.6.0
 PyYAML==6.0.2
 regex==2025.9.1
 requests==2.32.5
 rotary-embedding-torch==0.2.3
 sacrebleu==2.6.0
 safetensors==0.7.0
+scikit-image==0.21.0
 scikit-learn==1.6.1
+scikit-video==1.1.11
 scipy==1.13.1
 sentencepiece==0.1.99
 six==1.17.0
@@ -86,6 +91,7 @@ tabulate==0.9.0
 tensorboard==2.21.0
 tensorboard-data-server==0.7.2
 threadpoolctl==3.7.0
+tifffile==2024.8.30
 timm==0.4.12
 tokenizers==0.21.4
 torch==2.0.1
