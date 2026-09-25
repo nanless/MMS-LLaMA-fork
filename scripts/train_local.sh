@@ -14,6 +14,11 @@ GPU_IDS=${GPU_IDS:-0,1}
 UPDATE_FREQ=${UPDATE_FREQ:-4}
 MAX_TOKENS=${MAX_TOKENS:-1000}
 OUT_PATH=${OUT_PATH:-${ROOT}/exp/mms-llama/433h_${NGPUS}gpu}
+# Training profile.  mms-llama.yaml is the upstream release config (20 s /
+# 500-frame cap).  mms-llama-433h-cap600.yaml is the 24 s profile that keeps the
+# whole released 433h manifest (435.7 h instead of 303.9 h).  The default keeps
+# upstream behaviour; pick the other with CONFIG_NAME=mms-llama-433h-cap600.yaml.
+CONFIG_NAME=${CONFIG_NAME:-mms-llama.yaml}
 FAIRSEQ_BIN=${FAIRSEQ_BIN:-/root/miniforge3/envs/mms-llama-repro/bin/fairseq-hydra-train}
 
 [[ -x ${FAIRSEQ_BIN} ]] || { echo "fairseq-hydra-train not found: ${FAIRSEQ_BIN}" >&2; exit 1; }
@@ -29,7 +34,7 @@ export PYTHONPATH=${ROOT}/fairseq${PYTHONPATH:+:${PYTHONPATH}}
 
 CUDA_VISIBLE_DEVICES=${GPU_IDS} "${FAIRSEQ_BIN}" \
   --config-dir "${SRC_PTH}/conf" \
-  --config-name mms-llama.yaml \
+  --config-name "${CONFIG_NAME}" \
   task.data="${MANIFEST_DIR}" \
   task.label_dir="${MANIFEST_DIR}" \
   task.tokenizer_bpe_model=null \
