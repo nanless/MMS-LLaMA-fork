@@ -4,3 +4,7 @@ __pycache__/
 pretrained_models/
 exp/
 results/
+
+# Python build artifacts (were tracked by mistake)
+__pycache__/
+*.py[cod]
