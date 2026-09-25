@@ -4,8 +4,26 @@
 import argparse
 import csv
 import json
-import wave
+import math
 from pathlib import Path
+
+import numpy as np
+from scipy.io import wavfile
+
+
+def valid_audio_probe(path: Path, expected_samples: int) -> bool:
+    """Use the same WAV reader as MMS-LLaMA; Python 3.9 wave rejects float WAVs."""
+    try:
+        sample_rate, audio = wavfile.read(path)
+    except Exception:
+        return False
+    return (
+        sample_rate == 16000
+        and audio.ndim == 1
+        and audio.dtype == np.float32
+        and audio.size == expected_samples
+        and np.isfinite(audio).all()
+    )
 
 
 def validate_split(manifest_dir: Path, split: str, probe_audio: int) -> dict:
@@ -37,18 +55,23 @@ def validate_split(manifest_dir: Path, split: str, probe_audio: int) -> dict:
             report["missing_audio"] += 1
         if index >= len(labels) or not labels[index].strip():
             report["empty_label"] += 1
+        sample_count = -1
         try:
-            int(frames)
-            int(samples)
-            float(rate)
+            frame_count = int(frames)
+            sample_count = int(samples)
+            speech_rate = float(rate)
+            if (
+                frame_count <= 0
+                or sample_count <= 0
+                or not math.isfinite(speech_rate)
+                or speech_rate <= 0
+                or abs(frame_count / 25 - sample_count / 16000) > 0.1
+            ):
+                report["bad_numeric"] += 1
         except ValueError:
             report["bad_numeric"] += 1
         if index < probe_audio and Path(audio).is_file():
-            try:
-                with wave.open(audio, "rb") as handle:
-                    if handle.getframerate() != 16000 or handle.getnchannels() != 1:
-                        report["bad_audio_probe"] += 1
-            except (wave.Error, EOFError):
+            if not valid_audio_probe(Path(audio), sample_count):
                 report["bad_audio_probe"] += 1
     report["ok"] = not any(
         report.get(key, 0)
