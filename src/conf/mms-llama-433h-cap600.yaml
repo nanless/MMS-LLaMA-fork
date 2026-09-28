@@ -133,6 +133,11 @@ model:
   ##### Q Former #######
   use_qformer: true
   queries_per_sec: 3
+  # Must match task.max_sample_size: src/model.py sizes the Q-Former query
+  # token table as ceil(queries_per_sec * max_video_frames / 25 * (2 if
+  # use_sr_predictor else 1)) and raises if a batch needs more queries than
+  # that.  Leaving this at the 500 default would abort on 24-second segments.
+  max_video_frames: 600
   qformer_layers: 2
   qformer_dim: 1024
   ##### Speech Rate Predictor #######
