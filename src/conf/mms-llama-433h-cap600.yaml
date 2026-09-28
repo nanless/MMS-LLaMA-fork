@@ -123,7 +123,7 @@ model:
   ###### Llama ######
   target_modules : ???
   llama_embed_dim: 3072
-  llm_path: /root/code/github_repos/MMS-LLaMA/pretrained_models/llama-3.2-3b
+  llm_path: /root/code/github_repos/MMS-LLaMA-fork/pretrained_models/llama-3.2-3b
   lora_rank: 16
   lora_alpha: 32
   ###### AV Fusion ######
