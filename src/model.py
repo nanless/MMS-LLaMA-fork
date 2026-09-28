@@ -77,6 +77,9 @@ class MMS_LLaMA_Config(AVHubertAsrConfig):
     queries_per_sec: int = field(
         default=4, metadata={"help": "queries_per_sec"}
     )
+    max_video_frames: int = field(
+        default=500, metadata={"help": "maximum video frames admitted by the dataset"}
+    )
     qformer_layers: int = field(
         default=2, metadata={"help": "number of qformer layers"}
     )
@@ -122,10 +125,10 @@ class MMS_LLaMA(BaseFairseqModel):
             if cfg.window_level:
                 cfg.max_queries = 1
             self.afeat_1d_conv = nn.Conv1d(in_channels=cfg.whisper_embed_dim, out_channels=cfg.whisper_embed_dim, kernel_size=2, stride=2, padding=0) # 50Hz -> 25Hz
-            if cfg.use_sr_predictor:
-                max_queries = int(cfg.queries_per_sec * 20 * 2)
-            else:
-                max_queries = int(cfg.queries_per_sec * 20)
+            max_queries = math.ceil(
+                cfg.queries_per_sec * cfg.max_video_frames / 25
+                * (2 if cfg.use_sr_predictor else 1)
+            )
                 
             qformer_config = BertConfig.from_pretrained(cfg.qformer_config_path)
             qformer_config.num_hidden_layers = cfg.qformer_layers
@@ -551,6 +554,12 @@ class MMS_LLaMA(BaseFairseqModel):
 
     def compression_using_qformer(self, len_queries, resized_len_list, len_feat, av_feat):
         max_length = max(len_queries)
+        if max_length > self.query_tokens.size(1):
+            raise ValueError(
+                f"Q-Former requires {max_length} query tokens but has "
+                f"{self.query_tokens.size(1)}; align model.max_video_frames "
+                "with dataset.max_sample_size"
+            )
         B = len(len_queries)
         # Create attention mask for query tokens: (B x max_length)
         query_attn_mask = torch.zeros(B, max_length, dtype=torch.long, device=av_feat.device)
