@@ -19,6 +19,11 @@ OUT_PATH=${OUT_PATH:-${ROOT}/exp/mms-llama/433h_${NGPUS}gpu}
 # whole released 433h manifest (435.7 h instead of 303.9 h).  The default keeps
 # upstream behaviour; pick the other with CONFIG_NAME=mms-llama-433h-cap600.yaml.
 CONFIG_NAME=${CONFIG_NAME:-mms-llama.yaml}
+# Run length and resume.  Defaults preserve the upstream recipe; set
+# MAX_UPDATE=2 for a smoke, and RESTORE=<ckpt> to continue an interrupted run.
+MAX_UPDATE=${MAX_UPDATE:-30000}
+WARMUP_UPDATES=${WARMUP_UPDATES:-500}
+RESTORE=${RESTORE:-}
 FAIRSEQ_BIN=${FAIRSEQ_BIN:-/root/miniforge3/envs/mms-llama-repro/bin/fairseq-hydra-train}
 
 [[ -x ${FAIRSEQ_BIN} ]] || { echo "fairseq-hydra-train not found: ${FAIRSEQ_BIN}" >&2; exit 1; }
@@ -32,9 +37,20 @@ echo "Effective token budget per update: $((NGPUS * MAX_TOKENS * UPDATE_FREQ))"
 export TOKENIZERS_PARALLELISM=false
 export PYTHONPATH=${ROOT}/fairseq${PYTHONPATH:+:${PYTHONPATH}}
 
+# Fail fast instead of blocking every rank for 90 minutes if one rank dies.
+# See the FAIRSEQ_DIST_TIMEOUT note in fairseq/distributed/utils.py.
+export FAIRSEQ_DIST_TIMEOUT=${FAIRSEQ_DIST_TIMEOUT:-1800}
+
+EXTRA=()
+if [[ -n "${RESTORE}" ]]; then
+  EXTRA+=(checkpoint.restore_file="${RESTORE}")
+  echo "Resuming from ${RESTORE}"
+fi
+
 CUDA_VISIBLE_DEVICES=${GPU_IDS} "${FAIRSEQ_BIN}" \
   --config-dir "${SRC_PTH}/conf" \
   --config-name "${CONFIG_NAME}" \
+  "${EXTRA[@]+"${EXTRA[@]}"}" \
   task.data="${MANIFEST_DIR}" \
   task.label_dir="${MANIFEST_DIR}" \
   task.tokenizer_bpe_model=null \
@@ -62,10 +78,11 @@ CUDA_VISIBLE_DEVICES=${GPU_IDS} "${FAIRSEQ_BIN}" \
   model.use_sr_predictor=true \
   "optimization.update_freq=[${UPDATE_FREQ}]" \
   'optimization.lr=[1e-4]' \
-  optimization.max_update=30000 \
+  optimization.max_update="${MAX_UPDATE}" \
   lr_scheduler._name=cosine \
-  lr_scheduler.warmup_updates=500 \
+  lr_scheduler.warmup_updates="${WARMUP_UPDATES}" \
   distributed_training.distributed_world_size="${NGPUS}" \
   distributed_training.nprocs_per_node="${NGPUS}" \
   distributed_training.ddp_backend=legacy_ddp \
-  distributed_training.find_unused_parameters=true
+  distributed_training.find_unused_parameters=true \
+  "$@"

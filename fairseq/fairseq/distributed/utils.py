@@ -257,12 +257,17 @@ def distributed_init(cfg: FairseqConfig):
                     cfg.distributed_training.distributed_init_method,
                 )
             )
+            # Collective timeout.  Upstream hard-codes 5400 s, which means a
+            # single dead rank leaves every other rank blocked in a collective
+            # for 90 minutes while still holding its GPU memory.  Allow an
+            # override so long jobs can fail fast; the default is unchanged.
+            _dist_timeout_s = int(os.environ.get("FAIRSEQ_DIST_TIMEOUT", "5400"))
             dist.init_process_group(
                 backend=cfg.distributed_training.distributed_backend,
                 init_method=cfg.distributed_training.distributed_init_method,
                 world_size=cfg.distributed_training.distributed_world_size,
                 rank=cfg.distributed_training.distributed_rank,
-                timeout=datetime.timedelta(seconds=5400),
+                timeout=datetime.timedelta(seconds=_dist_timeout_s),
             )
             logger.info(
                 "initialized host {} as rank {}".format(
